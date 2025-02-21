@@ -13,6 +13,10 @@ interface Bill {
   due_date: string
   description: string
   total_owed: number
+  is_recurring: boolean
+  payment_dates?: string[]
+  remaining_balance?: number
+  payment_amounts?: number[]
 }
 
 interface Paycheck {
@@ -121,11 +125,29 @@ export default function OverviewTab() {
             <CardContent>
               <div className="space-y-2">
                 <div>Amount: ${bill.amount.toFixed(2)}</div>
+                {bill.is_recurring && (
+                  <div className="text-sm text-muted-foreground">
+                    Recurring Monthly
+                  </div>
+                )}
                 {bill.total_owed && (
                   <>
                     <div>Total Owed: ${bill.total_owed.toFixed(2)}</div>
-                    <Progress value={(bill.amount / bill.total_owed) * 100} />
-                    <div>Paid: {((bill.amount / bill.total_owed) * 100).toFixed(2)}%</div>
+                    <div>Remaining: ${bill.remaining_balance?.toFixed(2)}</div>
+                    <Progress 
+                      value={((bill.total_owed - (bill.remaining_balance || 0)) / bill.total_owed) * 100} 
+                    />
+                    <div>
+                      Paid: {((bill.total_owed - (bill.remaining_balance || 0)) / bill.total_owed * 100).toFixed(2)}%
+                    </div>
+                    <div className="mt-2 space-y-1">
+                      <div className="text-sm font-medium">Payment History:</div>
+                      {bill.payment_dates?.map((date, index) => (
+                        <div key={index} className="text-sm text-muted-foreground">
+                          ${(bill.payment_amounts?.[index] || 0).toFixed(2)} paid on {new Date(date).toLocaleDateString()}
+                        </div>
+                      ))}
+                    </div>
                   </>
                 )}
               </div>

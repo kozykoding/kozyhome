@@ -16,6 +16,9 @@ interface Bill {
   due_date: string
   description: string
   total_owed: number
+  is_recurring: boolean
+  payment_dates?: string[]
+  remaining_balance?: number
 }
 
 interface BillEditorProps {
@@ -95,10 +98,35 @@ export default function BillEditor({ bill, onClose, onSave }: BillEditorProps) {
               placeholder="Enter total amount owed"
             />
           </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="edit-is-recurring"
+              checked={editedBill.is_recurring}
+              onChange={(e) => setEditedBill({ ...editedBill, is_recurring: e.target.checked })}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="edit-is-recurring">Recurring Monthly Bill</Label>
+          </div>
           <div>
             <Label>Description</Label>
             <EditorContent editor={editor} />
           </div>
+          {editedBill.total_owed > 0 && (
+            <div>
+              <Label>Payment History</Label>
+              <div className="mt-2 space-y-2">
+                {editedBill.payment_dates?.map((date, index) => (
+                  <div key={index} className="text-sm">
+                    Payment made on: {new Date(date).toLocaleDateString()}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2">
+                Remaining Balance: ${editedBill.remaining_balance?.toFixed(2)}
+              </div>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button onClick={onClose}>Cancel</Button>

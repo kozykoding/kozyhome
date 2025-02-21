@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import BillEditor from "./BillEditor"
+import PaymentDialog from "./PaymentDialog"
 
 interface Bill {
   id: number
@@ -17,12 +18,23 @@ interface Bill {
   due_date: string
   description: string
   total_owed: number
+  is_recurring: boolean
+  payment_dates?: string[]
+  remaining_balance?: number
 }
 
 export default function BillsList() {
   const [bills, setBills] = useState<Bill[]>([])
-  const [newBill, setNewBill] = useState({ name: "", amount: "", due_date: "", total_owed: "" })
+  const [newBill, setNewBill] = useState({ 
+    name: "", 
+    amount: "", 
+    due_date: "", 
+    total_owed: "",
+    is_recurring: false 
+  })
   const [editingBill, setEditingBill] = useState<Bill | null>(null)
+  const [addingPaymentToBill, setAddingPaymentToBill] = useState<Bill | null>(null)
+  const [schedulingPaymentForBill, setSchedulingPaymentForBill] = useState<Bill | null>(null)
   const supabase = useSupabaseClient()
 
   useEffect(() => {
@@ -46,6 +58,9 @@ export default function BillsList() {
         ...newBill,
         amount: Number.parseFloat(newBill.amount),
         total_owed: newBill.total_owed ? Number.parseFloat(newBill.total_owed) : null,
+        remaining_balance: newBill.total_owed ? Number.parseFloat(newBill.total_owed) : null,
+        payment_dates: [],
+        payment_amounts: [],
       },
     ])
 
@@ -53,7 +68,7 @@ export default function BillsList() {
       console.error("Error inserting bill:", error)
     } else {
       console.log("Bill inserted successfully:", data)
-      setNewBill({ name: "", amount: "", due_date: "", total_owed: "" })
+      setNewBill({ name: "", amount: "", due_date: "", total_owed: "", is_recurring: false })
       fetchBills()
     }
   }
@@ -70,6 +85,14 @@ export default function BillsList() {
     } else {
       fetchBills()
     }
+  }
+
+  const handleAddPayment = (bill: Bill) => {
+    setAddingPaymentToBill(bill)
+  }
+
+  const handleSchedulePayment = (bill: Bill) => {
+    setSchedulingPaymentForBill(bill)
   }
 
   return (
@@ -116,6 +139,16 @@ export default function BillsList() {
             placeholder="Enter total amount owed"
           />
         </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="is_recurring"
+            checked={newBill.is_recurring}
+            onChange={(e) => setNewBill({ ...newBill, is_recurring: e.target.checked })}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <Label htmlFor="is_recurring">Recurring Monthly Bill</Label>
+        </div>
         <Button type="submit">Add Bill</Button>
       </form>
 
@@ -126,6 +159,7 @@ export default function BillsList() {
             <TableHead>Amount</TableHead>
             <TableHead>Due Date</TableHead>
             <TableHead>Total Owed</TableHead>
+            <TableHead>Recurring</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -136,10 +170,29 @@ export default function BillsList() {
               <TableCell>${bill.amount.toFixed(2)}</TableCell>
               <TableCell>{new Date(bill.due_date).toLocaleDateString()}</TableCell>
               <TableCell>{bill.total_owed ? `$${bill.total_owed.toFixed(2)}` : "N/A"}</TableCell>
+              <TableCell>{bill.is_recurring ? "Yes" : "No"}</TableCell>
               <TableCell>
                 <Button variant="outline" onClick={() => handleEdit(bill)} className="space-x-2">
                   Edit
                 </Button>
+                {bill.total_owed && (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleAddPayment(bill)} 
+                      className="mx-2"
+                    >
+                      Add Payment
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleSchedulePayment(bill)} 
+                      className="mx-2"
+                    >
+                      Schedule Payment
+                    </Button>
+                  </>
+                )}
                 <Button variant="destructive" onClick={() => handleDelete(bill.id)} className="mx-2">
                   Delete
                 </Button>
@@ -157,6 +210,35 @@ export default function BillsList() {
             setEditingBill(null)
             fetchBills()
           }}
+        />
+      )}
+
+      {addingPaymentToBill && (
+        <PaymentDialog
+          billId={addingPaymentToBill.id}
+          billName={addingPaymentToBill.name}
+          remainingBalance={addingPaymentToBill.remaining_balance || addingPaymentToBill.total_owed}
+          isOpen={true}
+          onClose={() => setAddingPaymentToBill(null)}
+          onSave={() => {
+            setAddingPaymentToBill(null)
+            fetchBills()
+          }}
+        />
+      )}
+
+      {schedulingPaymentForBill && (
+        <PaymentDialog
+          billId={schedulingPaymentForBill.id}
+          billName={schedulingPaymentForBill.name}
+          remainingBalance={schedulingPaymentForBill.remaining_balance || schedulingPaymentForBill.total_owed}
+          isOpen={true}
+          onClose={() => setSchedulingPaymentForBill(null)}
+          onSave={() => {
+            setSchedulingPaymentForBill(null)
+            fetchBills()
+          }}
+          isScheduling={true}
         />
       )}
     </div>
