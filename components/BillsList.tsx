@@ -137,10 +137,10 @@ export default function BillsList() {
               <TableCell>{new Date(bill.due_date).toLocaleDateString()}</TableCell>
               <TableCell>{bill.total_owed ? `$${bill.total_owed.toFixed(2)}` : "N/A"}</TableCell>
               <TableCell>
-                <Button variant="outline" onClick={() => handleEdit(bill)}>
+                <Button variant="outline" onClick={() => handleEdit(bill)} className="space-x-2">
                   Edit
                 </Button>
-                <Button variant="destructive" onClick={() => handleDelete(bill.id)}>
+                <Button variant="destructive" onClick={() => handleDelete(bill.id)} className="mx-2">
                   Delete
                 </Button>
               </TableCell>

@@ -15,6 +15,7 @@ interface Bill {
   amount: number
   due_date: string
   description: string
+  total_owed: number
 }
 
 interface BillEditorProps {
@@ -79,6 +80,19 @@ export default function BillEditor({ bill, onClose, onSave }: BillEditorProps) {
               type="date"
               value={editedBill.due_date}
               onChange={(e) => setEditedBill({ ...editedBill, due_date: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="edit-total-owed">Total Owed (if applicable)</Label>
+            <Input
+              id="edit-total-owed"
+              type="number"
+              value={editedBill.total_owed || ''}
+              onChange={(e) => setEditedBill({ 
+                ...editedBill, 
+                total_owed: e.target.value ? Number.parseFloat(e.target.value) : 0 
+              })}
+              placeholder="Enter total amount owed"
             />
           </div>
           <div>
